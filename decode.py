@@ -56,7 +56,7 @@ def find_space_period(ciphertext):
 
 def swap_perm(permutation, x, y):
     if y == x:
-            y = 0
+        y = 0
     x, y = max(x, y), min(x, y)
     return permutation[:y] + permutation[x] + permutation[y+1:x] + permutation[y] + permutation[x+1:]
 
@@ -69,16 +69,16 @@ def log_likelihood(ciphertext, permutation):
 
 def accept_prob(p1, p2, v1 = 0, v2 = 0):
     if p2 < -INF:
-        return 1
+        return 2
     if p1 - p2 + v1 - v2 > 0:
-        return 1
+        return 2
     return math.exp(p1 - p2 + v1 - v2)
 
 def best_permutation(ciphertext, trans, DEBUG=False):
     best_permutation = "".join(alphabet)
     best_likelihood = -INF
     iters = 0
-    while trans > 0 and iters < 50:
+    while trans > 0 and iters < 200:
         iters += 1
         cipherbet = alphabet.copy()
         random.shuffle(cipherbet)
@@ -100,17 +100,18 @@ def best_permutation(ciphertext, trans, DEBUG=False):
             if a >= 1:
                 permutation = newperm
                 p2 = p1
+            if a > 1.5:
                 count = 0
             else:
                 count += 1
 
-            if p2 / len(ciphertext) < -2.7 and lol * len(ciphertext) > MAX_TRANS / 20:
-                break
-            if p2 / len(ciphertext) < -2.5 and lol * len(ciphertext) > MAX_TRANS / 10:
-                break
-            if lol * len(ciphertext) > MAX_TRANS / 3:
-                break
-            if count > 2000:
+            # if p2 / len(ciphertext) < -2.7 and lol * len(ciphertext) > MAX_TRANS / 20:
+            #     break
+            # if p2 / len(ciphertext) < -2.5 and lol * len(ciphertext) > MAX_TRANS / 10:
+            #     break
+            # if lol * len(ciphertext) > MAX_TRANS / 3:
+            #     break
+            if count * len(ciphertext) > MAX_TRANS / 40:
                 break
             trans -= len(ciphertext)
 
@@ -172,13 +173,13 @@ def find_breakpoint(ciphertext, permutation1, permutation2):
 def decode(ciphertext, has_breakpoint, DEBUG=False):
     if has_breakpoint:
         c1 = ciphertext[:len(ciphertext) // 2]
-        permutation1 = best_permutation(c1, MAX_TRANS / 4, DEBUG)
+        permutation1 = best_permutation(c1, MAX_TRANS / 10, DEBUG)
         p1 = log_likelihood(c1, permutation1) / len(c1)
         if DEBUG:
             print(permutation1)
             print(p1)
         c2 = ciphertext[len(ciphertext) // 2:]
-        permutation2 = best_permutation(c2, MAX_TRANS / 4, DEBUG)
+        permutation2 = best_permutation(c2, MAX_TRANS / 10, DEBUG)
         p2 = log_likelihood(c2, permutation2) / len(c2)
         if DEBUG:
             print(permutation2)

@@ -3,8 +3,9 @@ import pandas as pd
 import random
 import math
 
-MAX_TRANS = 20000000
-NUM_RESTARTS = 10
+INF = 1000000000
+MAX_TRANS = 150000000
+# NUM_RESTARTS = 10
 # DECODER = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9, 'k': 10, 'l': 11, 'm': 12, 'n': 13, 'o': 14, 'p': 15, 'q': 16, 'r': 17, 's': 18, 't': 19, 'u': 20, 'v': 21, 'w': 22, 'x': 23, 'y': 24, 'z': 25, '.': 26, ' ': 27}
 DECODER = {}
 alphabet = open("data/alphabet.csv", "r").readline().strip().split(",")
@@ -15,7 +16,7 @@ letter_transition_matrix = pd.read_csv('data/letter_transition_matrix.csv', sep=
 for i in range(len(alphabet)):
     for j in range(len(alphabet)):
         if letter_transition_matrix[i][j] == 0:
-            letter_transition_matrix[i][j] = -1000000000
+            letter_transition_matrix[i][j] = -INF
         else:
             letter_transition_matrix[i][j] = math.log(letter_transition_matrix[i][j])
 
@@ -67,20 +68,27 @@ def log_likelihood(ciphertext, permutation):
     return prob
 
 def accept_prob(p1, p2, v1 = 0, v2 = 0):
+    if p2 < -INF:
+        return 1
     if p1 - p2 + v1 - v2 > 0:
         return 1
     return math.exp(p1 - p2 + v1 - v2)
 
-def best_permutation(ciphertext, DEBUG=False):
-    best_permutation = ""
-    best_likelihood = -1000000000
-    trans = MAX_TRANS
-    for i in range(NUM_RESTARTS):
-        permutation = "".join(alphabet)
+def best_permutation(ciphertext, trans, DEBUG=False):
+    best_permutation = "".join(alphabet)
+    best_likelihood = -INF
+    iters = 0
+    while trans > 0 and iters < 50:
+        iters += 1
+        cipherbet = alphabet.copy()
+        random.shuffle(cipherbet)
+        permutation = "".join(cipherbet)
         # permutation = find_space_period(ciphertext)
         p2 = log_likelihood(ciphertext, permutation)
         count = 0
-        for iter in range(MAX_TRANS // len(ciphertext)):
+        lol = 0
+        while trans > 0:
+            lol += 1
             x = random.randrange(0, len(alphabet))
             y = random.randrange(1, len(alphabet))
             newperm = swap_perm(permutation, x, y)
@@ -88,14 +96,25 @@ def best_permutation(ciphertext, DEBUG=False):
 
             a = accept_prob(p1, p2)
 
-            if random.random() < a: # happens with prob a
+            # if random.random() < a: # happens with prob a
+            if a > 0.51:
                 permutation = newperm
                 p2 = p1
                 count = 0
             else:
                 count += 1
-            if count > 1000
+
+            if p2 / len(ciphertext) < -2.7 and lol * len(ciphertext) > MAX_TRANS / 20:
                 break
+            if p2 / len(ciphertext) < -2.5 and lol * len(ciphertext) > MAX_TRANS / 10:
+                break
+            if lol * len(ciphertext) > MAX_TRANS / 5
+            if count > 2000:
+                break
+            trans -= len(ciphertext)
+
+        if DEBUG:
+            print(lol)
 
         likelihood = log_likelihood(ciphertext, permutation)
         if DEBUG:
@@ -152,32 +171,39 @@ def find_breakpoint(ciphertext, permutation1, permutation2):
 def decode(ciphertext, has_breakpoint, DEBUG=False):
     if has_breakpoint:
         c1 = ciphertext[:len(ciphertext) // 2]
-        permutation1 = best_permutation(c1, DEBUG)
+        permutation1 = best_permutation(c1, MAX_TRANS / 4, DEBUG)
         p1 = log_likelihood(c1, permutation1) / len(c1)
         if DEBUG:
             print(permutation1)
             print(p1)
         c2 = ciphertext[len(ciphertext) // 2:]
-        permutation2 = best_permutation(c2, DEBUG)
+        permutation2 = best_permutation(c2, MAX_TRANS / 4, DEBUG)
         p2 = log_likelihood(c2, permutation2) / len(c2)
         if DEBUG:
             print(permutation2)
             print(p2)
         if p1 > p2:
             breakpoint = find_breakpoint_rough(ciphertext, permutation1, True)
-            permutation2 = best_permutation(ciphertext[breakpoint:], DEBUG)
+            permutation1 = best_permutation(c1, MAX_TRANS * 1.5, DEBUG)
+            permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS / 2, DEBUG)
         else:
             breakpoint = find_breakpoint_rough(ciphertext, permutation2, False)
-            permutation1 = best_permutation(ciphertext[:breakpoint], DEBUG)
+            permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS / 2, DEBUG)
+            permutation2 = best_permutation(c2, MAX_TRANS * 1.5, DEBUG)
         if DEBUG:
-            print(breakpoint)
+            print("break ", breakpoint)
 
         breakpoint = find_breakpoint(ciphertext, permutation1, permutation2)
+        if p1 > p2:
+            permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS * 1.5, DEBUG)
+        else:
+            permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS * 1.5, DEBUG)
+
         if DEBUG:
-            print(breakpoint)
+            print("break ", breakpoint)
         return apply_perm(ciphertext[:breakpoint], permutation1) + apply_perm(ciphertext[breakpoint:], permutation2)
     else:
-        permutation = best_permutation(ciphertext, DEBUG)
+        permutation = best_permutation(ciphertext, MAX_TRANS * 2, DEBUG)
         return apply_perm(ciphertext, permutation)
 
 def accuracy(decoded, plaintext):

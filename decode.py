@@ -108,7 +108,7 @@ def best_permutation(ciphertext, trans, DEBUG=False):
                 break
             if p2 / len(ciphertext) < -2.5 and lol * len(ciphertext) > MAX_TRANS / 10:
                 break
-            if lol * len(ciphertext) > MAX_TRANS / 5
+            if lol * len(ciphertext) > MAX_TRANS / 5:
             if count > 2000:
                 break
             trans -= len(ciphertext)

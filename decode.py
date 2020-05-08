@@ -4,7 +4,7 @@ import random
 import math
 
 INF = 1000000000
-MAX_TRANS = 150000000
+MAX_TRANS = 180000000
 # NUM_RESTARTS = 10
 # DECODER = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9, 'k': 10, 'l': 11, 'm': 12, 'n': 13, 'o': 14, 'p': 15, 'q': 16, 'r': 17, 's': 18, 't': 19, 'u': 20, 'v': 21, 'w': 22, 'x': 23, 'y': 24, 'z': 25, '.': 26, ' ': 27}
 DECODER = {}
@@ -97,7 +97,7 @@ def best_permutation(ciphertext, trans, DEBUG=False):
             a = accept_prob(p1, p2)
 
             # if random.random() < a: # happens with prob a
-            if a > 0.51:
+            if a >= 1:
                 permutation = newperm
                 p2 = p1
                 count = 0
@@ -108,7 +108,7 @@ def best_permutation(ciphertext, trans, DEBUG=False):
                 break
             if p2 / len(ciphertext) < -2.5 and lol * len(ciphertext) > MAX_TRANS / 10:
                 break
-            if lol * len(ciphertext) > MAX_TRANS / 5:
+            if lol * len(ciphertext) > MAX_TRANS / 3:
                 break
             if count > 2000:
                 break

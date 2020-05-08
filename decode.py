@@ -185,21 +185,23 @@ def decode(ciphertext, has_breakpoint, DEBUG=False):
             print(permutation2)
             print(p2)
         if p1 > p2:
+            permutation1 = best_permutation(c1, MAX_TRANS * 1, DEBUG)
             breakpoint = find_breakpoint_rough(ciphertext, permutation1, True)
-            permutation1 = best_permutation(c1, MAX_TRANS * 1.5, DEBUG)
             permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS / 2, DEBUG)
+            permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS / 2, DEBUG)
         else:
+            permutation2 = best_permutation(c2, MAX_TRANS * 1, DEBUG)
             breakpoint = find_breakpoint_rough(ciphertext, permutation2, False)
             permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS / 2, DEBUG)
-            permutation2 = best_permutation(c2, MAX_TRANS * 1.5, DEBUG)
+            permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS / 2, DEBUG)
         if DEBUG:
             print("break ", breakpoint)
 
         breakpoint = find_breakpoint(ciphertext, permutation1, permutation2)
         if p1 > p2:
-            permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS * 1.5, DEBUG)
+            permutation2 = best_permutation(ciphertext[breakpoint:], MAX_TRANS * 1, DEBUG)
         else:
-            permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS * 1.5, DEBUG)
+            permutation1 = best_permutation(ciphertext[:breakpoint], MAX_TRANS * 1, DEBUG)
 
         if DEBUG:
             print("break ", breakpoint)
